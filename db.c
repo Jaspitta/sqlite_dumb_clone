@@ -58,7 +58,7 @@ MetaCommandResult handle_meta_command(InputBuffer* in_buff) {
   }
 
   if(strncmp(in_buff->buff, ".exit", 5) == 0) {
-    printf("Recognized .exit meta command, exiting program\n");
+    //printf("Recognized .exit meta command, exiting program\n");
     exit(0);
   } else {
     return META_COMMAND_UNRECOGNIZED;
@@ -86,7 +86,7 @@ typedef struct {
 } Statement;
 
 void print_row(Row* row) {
-  printf("%d %s %s\n", row->id, row->username, row->email);
+  printf("(%d, %s, %s)\n", row->id, row->username, row->email);
 }
 
 #define size_of_attribute(Struct, Attribute) sizeof(((Struct*)0)->Attribute)
@@ -197,7 +197,7 @@ typedef enum {
 
 ExecuteResult execute_insert(Statement* statement, Table* table) {
   if(table->num_rows >= TABLE_MAX_ROWS) {
-    printf("Table is already full");
+    //printf("Table is already full");
     return EXECUTE_TABLE_FULL;
   }
 
@@ -223,17 +223,17 @@ ExecuteResult execute_select(Table* table) {
 ExecuteResult execute_statement(Statement* statement, Table* table) {
   switch(statement->type) {
     case (STATEMENT_INSERT):
-      printf("executing insert statement\n");
+      //printf("executing insert statement\n");
       return execute_insert(statement, table);
     case (STATEMENT_SELECT):
-      printf("executing select statement\n");
+      //printf("executing select statement\n");
       return execute_select(table);
   }
 }
 
 
 int main (void) {
-  printf("Hello, welcome to this small sqlLite clone\n");
+  //printf("Hello, welcome to this small sqlLite clone\n");
   Table* table = new_table();
 
   // read-execute-print 
@@ -257,7 +257,7 @@ int main (void) {
       Statement statement;
       switch(prepare_statement(in_buff, &statement)) {
         case (PREPARE_SUCCESS):
-          printf("Statement succesfully prepared\n");
+          //printf("Statement succesfully prepared\n");
           break;
         case (PREPARE_SYNTAX_ERROR) :
           printf("Syntax error, could not parse statement %s\n", in_buff->buff);
@@ -270,9 +270,10 @@ int main (void) {
 
       switch(execute_statement(&statement, table)) {
         case (EXECUTE_SUCCESS):
-          printf("Statement %s executed \n", in_buff->buff);
+          printf("Executed.\n");
+          break;
         case (EXECUTE_TABLE_FULL):
-          printf("Table already full");
+          printf("Error: Table full.\n");
           free_input_buffer(in_buff);
           break;
       }

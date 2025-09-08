@@ -1,0 +1,4 @@
+---
+BUNDLE_BIN: "bin"
+BUNDLE_PATH: "/Users/u482024/homebrew/Cellar/ruby/3.4.5/lib/ruby/gems/3.4.0"
+#BUNDLE_PATH: "/Users/u482024/homebrew/lib/ruby/gems/3.4.0:/Users/u482024/homebrew/Cellar/ruby/3.4.5/lib/ruby/gems/3.4.0"
