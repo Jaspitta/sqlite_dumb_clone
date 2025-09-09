@@ -76,8 +76,9 @@ typedef enum {
 
 typedef struct {
   uint32_t id;
-  char username[COLUMN_USERNAME_SIZE];
-  char email[COLUMN_EMAIL_SIZE];
+  // the +1 is for termination character
+  char username[COLUMN_USERNAME_SIZE+1];
+  char email[COLUMN_EMAIL_SIZE+1];
 } Row;
 
 typedef struct {
@@ -103,8 +104,49 @@ const uint32_t ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE;
 typedef enum {
   PREPARE_SUCCESS,
   PREPARE_UNRECOGNIZED,
-  PREPARE_SYNTAX_ERROR
+  PREPARE_SYNTAX_ERROR,
+  PREPARE_STRING_TOO_LONG,
+  PREPARE_NEGATIVE_ID,
 } PrepareResult;
+
+PrepareResult validate_insert_statement(InputBuffer* in_buff, Statement* statement) {
+    statement->type = STATEMENT_INSERT;
+
+    for(int i = 0, spaces = 0; i < in_buff->in_len; i++){
+      while(spaces < 1 && i < in_buff->in_len) {
+        if(in_buff->buff[i] == ' ') spaces++;
+        i++;
+      }
+
+      if(in_buff->buff[i] == '-') {
+        printf("ID can not be negative\n");
+        return PREPARE_NEGATIVE_ID;
+      }
+
+      while(spaces < 2 && i < in_buff->in_len) {
+        if(in_buff->buff[i] == ' ') spaces++;
+        i++;
+      }
+
+      int start_username = i;
+      while(spaces == 2 && i < in_buff->in_len) {
+        if(in_buff->buff[i] == ' ') spaces++;
+        i++;
+      }
+
+      if(i - start_username - 1 > COLUMN_USERNAME_SIZE) {
+        printf("Input username in insert statement is bigger than the max size of %d\n", COLUMN_USERNAME_SIZE);
+        return PREPARE_STRING_TOO_LONG;
+      }
+
+      if(in_buff->in_len - i > COLUMN_EMAIL_SIZE) {
+        printf("Input email in insert statement is bigger than the max size of %d\n", COLUMN_EMAIL_SIZE);
+        return PREPARE_STRING_TOO_LONG;
+      }
+    }
+
+  return PREPARE_SUCCESS;
+}
 
 // check buffer and use it to prepare the stament in the passed statement.
 // If the statement is not recognized return an unrecognized
@@ -116,6 +158,11 @@ PrepareResult prepare_statement(InputBuffer* in_buff, Statement* statement) {
 
   if(strncmp(in_buff->buff, "insert", 6) == 0) {
     statement->type = STATEMENT_INSERT;
+
+    PrepareResult validation = validate_insert_statement(in_buff, statement);
+    if(validation != PREPARE_SUCCESS) return validation;
+
+
     int args_red = sscanf(in_buff->buff, "insert %d %s %s", &(statement->row_insert.id), ((char*)(statement->row_insert.username)), ((char*)(statement->row_insert.email)));
     if(args_red != 3) {
       printf("Red an erroneous number of arguments to an insert statement");
@@ -259,8 +306,16 @@ int main (void) {
         case (PREPARE_SUCCESS):
           //printf("Statement succesfully prepared\n");
           break;
-        case (PREPARE_SYNTAX_ERROR) :
-          printf("Syntax error, could not parse statement %s\n", in_buff->buff);
+        case (PREPARE_SYNTAX_ERROR):
+          printf("Syntax error, could not parse statement\n");
+          free_input_buffer(in_buff);
+          continue;
+        case (PREPARE_STRING_TOO_LONG):
+          printf("Syntax error, could not parse statement\n");
+          free_input_buffer(in_buff);
+          continue;
+        case (PREPARE_NEGATIVE_ID):
+          printf("Syntax error, could not parse statement\n");
           free_input_buffer(in_buff);
           continue;
         case (PREPARE_UNRECOGNIZED):

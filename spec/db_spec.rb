@@ -38,4 +38,66 @@ describe 'database' do
     expect(result[-2]).to eq('db > Error: Table full.')
   end
 
+  it 'allows inserting strings that are the maximum length' do
+    long_username = "a"*32
+    long_email = "a"*255
+    script = [
+      "insert 1 #{long_username} #{long_email}",
+      "select",
+      ".exit",
+    ]
+    result = run_script(script)
+    expect(result).to match_array([
+      "db > Executed.",
+      "db > (1, #{long_username}, #{long_email})",
+      "Executed.",
+      "db > ",
+    ])
+  end
+
+  it 'it stops on username over 32' do
+    long_username = "a"*33
+    long_email = "a"*255
+    script = [
+      "insert 1 #{long_username} #{long_email}",
+      ".exit",
+    ]
+    result = run_script(script)
+    expect(result).to match_array([
+      "db > Input username in insert statement is bigger than the max size of 32",
+      "Syntax error, could not parse statement",
+      "db > ",
+    ])
+  end
+
+  it 'it stops on email over 255' do
+    long_username = "a"*32
+    long_email = "a"*256
+    script = [
+      "insert 1 #{long_username} #{long_email}",
+      ".exit",
+    ]
+    result = run_script(script)
+    expect(result).to match_array([
+      "db > Input email in insert statement is bigger than the max size of 255",
+      "Syntax error, could not parse statement",
+      "db > ",
+    ])
+  end
+
+  it 'it stops on negative id' do
+    long_username = "a"*32
+    long_email = "a"*255
+    script = [
+      "insert -1 #{long_username} #{long_email}",
+      ".exit",
+    ]
+    result = run_script(script)
+    expect(result).to match_array([
+      "db > ID can not be negative",
+      "Syntax error, could not parse statement",
+      "db > ",
+    ])
+  end
+
 end
