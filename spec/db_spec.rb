@@ -100,4 +100,32 @@ describe 'database' do
     ])
   end
 
+  it 'persist data' do
+    long_username = "a"*5
+    long_email = "a"*5
+    script = [
+      "insert 1 #{long_username} #{long_email}",
+      "select",
+      ".exit",
+    ]
+    result = run_script(script)
+    expect(result).to match_array([
+      "db > Executed.",
+      "db > (1, aaaaa, aaaaa)",
+      "Executed.",
+      "db > ",
+    ])
+    script = [
+      "select",
+      ".exit",
+    ]
+    result = run_script(script)
+    expect(result).to match_array([
+      "db > (1, aaaaa, aaaaa)",
+      "Executed.",
+      "db > ",
+    ])
+  end
+
+
 end
