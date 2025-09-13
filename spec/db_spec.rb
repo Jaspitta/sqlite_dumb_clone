@@ -1,8 +1,11 @@
 describe 'database' do
+  before do 
+    `rm -f test.db`
+  end
 
   def run_script(commands)
     raw_output = nil
-    IO.popen("./db", "r+") do |pipe|
+    IO.popen("./db test.db", "r+") do |pipe|
       commands.each do |command|
         pipe.puts command
       end
@@ -126,6 +129,5 @@ describe 'database' do
       "db > ",
     ])
   end
-
 
 end
